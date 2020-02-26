@@ -1,0 +1,1 @@
+--batch-size=15 --epochs=10 --hid-size=2 --lr=0.001 --drop-out=0.2
