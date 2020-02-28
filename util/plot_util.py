@@ -55,8 +55,6 @@ def visualization_trajectory(trajectories, n_row, n_col, plot_3d =True):
 
     if plot_3d:
         fig2 = plt.figure()
-        # fig2, axes2 = plt.subplots(nrows=n_row, ncols=n_col,  projection="3d")
-        # axes2 = axes2.flatten()
         for _i in range(n_traj):
             ax = fig2.add_subplot(n_row, n_col, _i+1, projection="3d")
             traj = trajectories[_i]

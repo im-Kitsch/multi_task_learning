@@ -24,8 +24,17 @@ class TrajDataset(torch.utils.data.Dataset):
 
 class PflowLoader:
     def __init__(self, data_path, dict_path, begin_ix, time_interval, num_per_day,
-                 mode="normal", require="traj_code"):
-        code = pd.read_csv(data_path, header=None, usecols=[14])
+                 mode="normal", require="traj_code", begin_code=None):
+        all_unique_code = np.loadtxt(f"{dict_path}/unique_code.txt", dtype="U8")
+        all_unique_coordinate = np.loadtxt(f"{dict_path}/unique_coordinate.txt")
+        if not (begin_code is None):
+            all_unique_code = np.append(all_unique_code, begin_code)
+            all_unique_coordinate = np.concatenate([all_unique_coordinate, [[0, 0]]], axis=0)
+
+        self.code2lng = dict(zip(all_unique_code, all_unique_coordinate[:, 0]))
+        self.code2lat = dict(zip(all_unique_code, all_unique_coordinate[:, 1]))
+
+        code = pd.read_csv(data_path, header=None, usecols=[14]) #, nrows=1440*15)
         code_arr = code.loc[:, 14].to_numpy(dtype="U8")
         del code
 
@@ -35,21 +44,20 @@ class PflowLoader:
         code_arr = code_arr[:, ix]
 
         uniq_code = np.unique(code_arr)
+        if not (begin_code is None):
+            uniq_code = np.append(uniq_code, begin_code)
         uniq_ix = np.arange(len(uniq_code))
 
         self.code2ix = dict(zip(uniq_code, uniq_ix))
         self.ix2code = dict(zip(uniq_ix, uniq_code))
+        self.num_code = len(uniq_ix)
 
         self.dataset = self.trans_code2ix(code_arr)
         del code_arr
-
-        all_unique_code = np.loadtxt(f"{dict_path}/unique_code.txt", dtype="U8")
-        all_unique_coordinate = np.loadtxt(f"{dict_path}/unique_coordinate.txt")
-
-        self.code2lng = dict(zip(all_unique_code, all_unique_coordinate[:, 0]))
-        self.code2lat = dict(zip(all_unique_code, all_unique_coordinate[:, 1]))
-
         return
+
+    def get_data(self):
+        return self.dataset, self.num_code
 
     def trans_code2ix(self, code):
         orig_shape = code.shape
